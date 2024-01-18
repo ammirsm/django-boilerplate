@@ -240,3 +240,5 @@ fabric.properties
 .ruff_cache
 
 db
+
+postgres_data
