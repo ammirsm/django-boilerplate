@@ -155,7 +155,4 @@ REST_FRAMEWORK = {
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-app = Celery("core")
-
-
 IS_CIRCLE_CI = os.environ.get("IS_CIRCLE_CI", False)
