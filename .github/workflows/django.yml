@@ -52,12 +52,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
       - name: Install dependencies
-        run: poetry install --with dev
+        run: poetry install --with dev --no-interaction
       - name: Run lint with tests
         uses: chartboost/ruff-action@v1
         with:
           args: --fix-only
       - name: Run Tests
         run: |
-          python manage.py migrate
-          python manage.py test
+          poetry run python manage.py migrate
+          poetry run python manage.py test
