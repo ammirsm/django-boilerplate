@@ -11,14 +11,16 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
+
 import environ
+from celery import Celery
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Import project environment
 env = environ.Env()
-ENV_FILE_PATH = env.str('ENV_FILE_PATH', os.path.join(BASE_DIR, '.env'))  # Path to .env file
+ENV_FILE_PATH = env.str("ENV_FILE_PATH", os.path.join(BASE_DIR, ".env"))  # Path to .env file
 environ.Env.read_env(ENV_FILE_PATH)  # read .env file
 
 # Quick-start development settings - unsuitable for production
@@ -32,7 +34,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,6 +43,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "main",
+    "django_celery_beat",
+    "django_celery_results",
+    "rest_framework",
+    "django_filters",
+    "drf_yasg",
+    "rest_framework_simplejwt",
 ]
 
 MIDDLEWARE = [
@@ -74,21 +82,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "core.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'yourdbname'),
-        'USER': os.environ.get('POSTGRES_USER', 'yourdbuser'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'yourdbpassword'),
-        'HOST': '127.0.0.1',  # Name of the service in docker-compose
-        'PORT': '5432',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB", "postgres"),
+        "USER": os.environ.get("POSTGRES_USER", "postgres"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "postgres"),
+        "HOST": os.environ.get("POSTGRES_HOST", "0.0.0.0"),  # Name of the service in docker-compose
+        "PORT": "5432",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -108,7 +114,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -120,13 +125,37 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# celery configs
+CELERY_REDIS_HOST = os.environ.get("CELERY_REDIS_HOST", "localhost")
+CELERY_BROKER_URL = f"redis://{CELERY_REDIS_HOST}:6379/0"
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "django-cache"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+}
+
+
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+app = Celery("core")
+
+
+IS_CIRCLE_CI = os.environ.get("IS_CIRCLE_CI", False)
